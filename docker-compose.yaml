@@ -7,10 +7,10 @@ services:
     volumes:
       - ./:/app
       # Monta la clave JSON dentro del contenedor (Ve a la carpeta de secretos y revisa el readme)
-      - ./secrets/key.json:/secrets/key.json:ro
+      - ./secrets/key.json:/secrets/key.json
     environment:
       - PORT=8080
-      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/key.json
-      - GOOGLE_CLOUD_PROJECT=nube-2025-i # Reemplaza con TU proyecto
-      - FIRESTORE_DATABASE=db-notes # Reemplaza con TU base de datos
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/key.json
+      - GOOGLE_CLOUD_PROJECT=careful-sphinx-479221-u8
+      - FIRESTORE_DATABASE=practica-firestorebd
     command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload

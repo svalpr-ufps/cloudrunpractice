@@ -1,0 +1,6 @@
+
+###
+POST http://localhost:8080/notes 
+Content-Type: application/json
+
+{"title":"Mi primera nota","content":"Contenido de prueba"}

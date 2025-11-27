@@ -2,49 +2,76 @@ from fastapi import FastAPI, HTTPException, Request
 from google.cloud import firestore
 import os
 
+
 # Carga de variables de entorno
-# PROJECT_ID: ID del proyecto de GCP donde existe Firestore
 project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
-# DATABASE_ID: Nombre de la base de datos Firestore (db-notes)
 database_id = os.environ["FIRESTORE_DATABASE"]
 
 # Inicialización del cliente de Firestore
-# Creamos el cliente de Firestore pasándole explícitamente el project_id y el database_id
 db = firestore.Client(project=project_id, database=database_id)
 
 # Configuración de la app FastAPI
 app = FastAPI(title="Notas con Firestore real")
 
+
 # Endpoint: Listar todas las notas
 # Método: GET /notes
 @app.get("/notes")
 async def list_notes():
-    # 1. Accedemos a la colección "notes"
     docs = db.collection("notes").stream()
-    # 2. Convertimos cada documento en un diccionario con su ID y datos
     return [{"id": d.id, **d.to_dict()} for d in docs]
+
 
 # Endpoint: Crear una nueva nota
 # Método: POST /notes
 @app.post("/notes")
 async def create_note(req: Request):
-    # 1. Leemos el JSON del cuerpo de la petición
     data = await req.json()
-
-    # 2. Validamos que existan los campos obligatorios 'title' y 'content'
+    
     if not data.get("title") or not data.get("content"):
         raise HTTPException(status_code=400, detail="Faltan 'title' o 'content'")
-
-    # 3. Creamos un nuevo documento con ID automático en la colección "notes"
+    
     ref = db.collection("notes").document()
-
-    # 4. Guardamos los datos junto con la fecha de creación del servidor
     ref.set({
         "title": data["title"],
         "content": data["content"],
-        # SERVER_TIMESTAMP inserta la fecha/hora actual del servidor
         "created_at": firestore.SERVER_TIMESTAMP
     })
-
-    # 5. Devolvemos el ID del documento recién creado
+    
     return {"id": ref.id}
+
+
+# Endpoint: Actualizar una nota
+# Método: PUT /notes/{note_id}
+# Endpoint: Actualizar una nota
+# Método: PUT /notes/{note_id}
+@app.put("/notes/{note_id}")
+async def update_note(note_id: str, req: Request):
+    try:
+        data = await req.json()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"JSON inválido: {str(e)}")
+    
+    if not data.get("title") or not data.get("content"):
+        raise HTTPException(status_code=400, detail="Faltan 'title' o 'content'")
+    
+    # Verificar que el documento existe
+    doc = db.collection("notes").document(note_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+    
+    db.collection("notes").document(note_id).update({
+        "title": data["title"],
+        "content": data["content"]
+    })
+    
+    return {"id": note_id, "message": "Nota actualizada"}
+
+
+
+# Endpoint: Eliminar una nota
+# Método: DELETE /notes/{note_id}
+@app.delete("/notes/{note_id}")
+async def delete_note(note_id: str):
+    db.collection("notes").document(note_id).delete()
+    return {"id": note_id, "message": "Nota eliminada"}
