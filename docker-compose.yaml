@@ -11,6 +11,6 @@ services:
     environment:
       - PORT=8080
       - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/key.json
-      - GOOGLE_CLOUD_PROJECT=careful-sphinx-479221-u8
-      - FIRESTORE_DATABASE=practica-firestorebd
+      - GOOGLE_CLOUD_PROJECT=nube-ufps
+      - FIRESTORE_DATABASE=cloudrundb
     command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
